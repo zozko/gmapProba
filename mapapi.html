@@ -7,9 +7,12 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>google map probak</title>
     <style>
-        /* Always set the map height explicitly to define the size of the div
-           * element that contains the map. */
-
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
 
         .napora {
             display: block;
@@ -48,22 +51,10 @@
             /*border-radius: 50%;*/
         }
 
-        /* Optional: Makes the sample page fill the window. */
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        @keyframes felkor {
-            from {
-                transform: rotate(0deg) translateX(180px) rotate(0deg);
-            }
-
-            to {
-                transform: rotate(180deg) translateX(205px) rotate(-180deg);
-            }
+        .napSzam {
+            position: relative;
+            text-align: center;
+            margin-top: 100px;
         }
     </style>
 </head>
@@ -77,6 +68,7 @@
         </div>
         <div id="map"></div>
     </div>
+    <p class="napSzam"></p>
     <script>
         // ezek a valtozok a terkepkoordinatakhoz vannak
         var lati;
@@ -100,16 +92,23 @@
                 center: lalo,   // a terkep kozeppontjanak koordinataja
                 zoom: 12 // 0 vagy 1 az egesz vilag; 2 a kontinens; 10 a varos; 15 az utca; 20 az epulet
             });
-            var marker = new google.maps.Marker({ position: lalo, map: map, title: "PRES-TEL, s. r. o." });
+            var marker = new google.maps.Marker({ position: lalo, map: map, title: "YOU!" });
         }
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAhu0hhanRczprulEWaG1776phvDkaAbQ4&v=3.34&callback=initMap"
         async defer></script>
 
-    <!-- ide jon a script ami kiszamitja a napfelkeltet es napnyugtat-->
+    <!-- ide jon a script ami kiszamitja a napfelkeltet es napnyugtat idopontjat-->
+    <script>
+        //itt szamitja ki hanyadik nap van az evben
+        var ma = new Date();
+        var elsonap = new Date(ma.getFullYear(), 0, 1);
+        napSzama = Math.round(((ma - elsonap) / 1000 / 60 / 60 / 24) + .5);
+        document.getElementsByClassName("napSzam")[0].innerHTML = "az év " + napSzama + ". napja van ma.";
+    </script>
 
 
-    <!-- ide jon egy funkcio ami atszamitja fokokra az idot-->
+    <!-- ide jon egy funkcio ami atszamitja fokokra az idot ami azt jelenti, hogy a 180 fokot felosztja az ido hosszaval, amig fentvan a nap-->
 
     <!-- ez a script forgatja a napot a terkep kozeppontja korul gyenlore csak ha raklikkelek-->
     <script>
