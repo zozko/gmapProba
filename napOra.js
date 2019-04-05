@@ -1,163 +1,131 @@
-//napkelte es napnyugta valtozoi:
+setTimeout(() => {
+  console.log('a beolvasott koordinatak: ' + lati + ' & ' + loti);
 
-if (navigator.geolocation) {
-  var lngtd;
-  navigator.geolocation.getCurrentPosition(adPosition);
-} else {
-  document.getElementsByClassName('longitudo')[0].innerHTML =
-    'Geolocation is not supported by this browser.';
-}
+  var ma = new Date();
+  var elsonap = new Date(ma.getFullYear(), 0, 1);
+  var N = Math.round((ma - elsonap) / 1000 / 60 / 60 / 24 + 0.5);
+  console.log('ma az év ' + N + '. napja van!');
+  var d = new Date();
+  var localOffset = d.getTimezoneOffset();
+  console.log(localOffset + ' perc az UTC-hez kepest');
+  localOffset = localOffset / 60;
+  console.log('UTC hez kepest a helyi ido oraban: ' + localOffset);
 
-function adPosition(position) {
-  longi = position.coords.longitude;
-  lngtd = parseFloat(longi);
-  return lngtd;
-}
+  function computeSunrise(day, sunrise) {
+    /*Sunrise/Sunset Algorithm taken from
+  http://williams.best.vwh.net/sunrise_sunset_algorithm.htm
+  inputs:
+  day = day of the year
+  sunrise = true for sunrise, false for sunset
+  output:
+      time of sunrise/sunset in hours */
 
-//itt szamitja ki hanyadik nap van az evben
-var ma = new Date();
-var elsonap = new Date(ma.getFullYear(), 0, 1);
-var N = Math.round((ma - elsonap) / 1000 / 60 / 60 / 24 + 0.5);
-document.getElementsByClassName('napSzam')[0].innerHTML =
-  'az év ' + N + '. napja van ma.';
+    //lat, lon for Sturovo Slovakia
+    var latitude = lati;
+    var longitude = loti;
+    var zenith = 90.83333333333333;
+    var D2R = Math.PI / 180;
+    var R2D = 180 / Math.PI;
 
-//var lngtd = ;
-var zenith = 96;
-var localOffset = 0;
-var fromRad = 180 / 3.14159;
-var toRad = 3.14159 / 180;
-var lngHour = loti / 15;
-var tRise = N + (6 - lngHour) / 24;
-var tSet = N + (18 - lngHour) / 24;
-var MRise = 0.9856 * tRise - 3.289;
-var MSet = 0.9856 * tSet - 3.289;
-var padFel;
-var padLe;
-console.log(loti + ' napora loti ellenorzes');
-/*if (loti === undefined) {
-  window.location.reload(true);
-}
-*/
-console.log('naporaban a lati es a loti ' + lati + ' ' + loti);
-console.log(
-  'valtozoim tRise: ' +
-    tRise +
-    ' tSet: ' +
-    tSet +
-    ' MRise:' +
-    MRise +
-    ' MSet: ' +
-    MSet +
-    ' es lngHour: ' +
-    lngHour +
-    ' latitude: ' +
-    lati +
-    ' longitude: ' +
-    loti
-);
+    // convert the longitude to hour value and calculate an approximate time
+    var lnHour = longitude / 15;
+    var t;
+    if (sunrise) {
+      t = day + (6 - lnHour) / 24;
+    } else {
+      t = day + (18 - lnHour) / 24;
+    }
 
-// a nyari idoszamitas beallitasa
-if (N > 90 && N < 300) localOffset -= 1;
+    //calculate the Sun's mean anomaly
+    M = 0.9856 * t - 3.289;
 
-// a Nap valos longitudojanak kiszamitasa (felkelo = lfel; lenyugvo = lLe)
-var lFel =
-  MRise +
-  1.916 * Math.sin(toRad * MRise) +
-  0.02 * Math.sin(2 * toRad * MRise) +
-  282.634;
-var lLe =
-  MSet +
-  1.916 * Math.sin(toRad * MSet) +
-  0.02 * Math.sin(2 * toRad * MSet) +
-  282.634;
-console.log(lFel + ' es ' + lLe);
+    //calculate the Sun's true longitude
+    L = M + 1.916 * Math.sin(M * D2R) + 0.02 * Math.sin(2 * M * D2R) + 282.634;
+    if (L > 360) {
+      L = L - 360;
+    } else if (L < 0) {
+      L = L + 360;
+    }
 
-if (lFel > 360) lFel -= 360;
-if (lFel < 0) lFel += 360;
-if (lLe > 360) lLe -= 360;
-if (lLe < 0) lLe += 360;
+    //calculate the Sun's right ascension
+    RA = R2D * Math.atan(0.91764 * Math.tan(L * D2R));
+    if (RA > 360) {
+      RA = RA - 360;
+    } else if (RA < 0) {
+      RA = RA + 360;
+    }
 
-// a Nap valos ascendesenek kiszamitasa ( felkelo = felRa; lenyugvo = leRa)
-var felRa = fromRad * Math.atan(0.91764 * Math.tan(toRad * lFel));
-var leRa = fromRad * Math.atan(0.91764 * Math.tan(toRad * lLe));
-if (felRa > 360) felRa -= 360;
-if (felRa < 0) felRa += 360;
-if (leRa > 360) leRa -= 360;
-if (leRa < 0) felRa += 360;
+    //right ascension value needs to be in the same qua
+    Lquadrant = Math.floor(L / 90) * 90;
+    RAquadrant = Math.floor(RA / 90) * 90;
+    RA = RA + (Lquadrant - RAquadrant);
 
-// QUADRANSOK letrehozasa (felkelo = felLquadrant; lenyugvo = leLquadrant)
-var felLquadrant = Math.floor(lFel / 90) * 90;
-var leLquadrant = Math.floor(lLe / 90) * 90;
-var felRAquadrant = Math.floor(felRa / 90) * 90;
-var leRAquadrant = Math.floor(leRa / 90) * 90;
-var felRa2 = (felRa + (felLquadrant - felRAquadrant)) / 15;
-var leRa2 = (leRa + (leLquadrant - leRAquadrant)) / 15;
+    //right ascension value needs to be converted into hours
+    RA = RA / 15;
 
-// quadransok atszamitasa orakka !!! FELULERTEKELNI HOGY SZUKSEGES-E!!!
-/*
-var felRa3 = felRa2;
-var leRa3 = leRa2;
-*/
-// a Nap deklinacioja
-var sinDecFel = 0.39782 * Math.sin(toRad * lFel);
-var sinDecLe = 0.39782 * Math.sin(toRad * lLe);
-var cosDecFel = Math.cos(Math.asin(sinDecFel));
-var cosDecLe = Math.cos(Math.asin(sinDecLe));
+    //calculate the Sun's declination
+    sinDec = 0.39782 * Math.sin(L * D2R);
+    cosDec = Math.cos(Math.asin(sinDec));
 
-// a Nap helyi idejenek szoge cosHfel es cosHle
-var cosHfel =
-  (Math.cos(zenith) - sinDecFel * Math.sin(lati)) /
-  (cosDecFel * Math.cos(lati));
-var cosHle =
-  (Math.cos(zenith) - sinDecLe * Math.sin(lati)) / (cosDecLe * Math.cos(lati));
+    //calculate the Sun's local hour angle
+    cosH =
+      (Math.cos(zenith * D2R) - sinDec * Math.sin(latitude * D2R)) /
+      (cosDec * Math.cos(latitude * D2R));
+    var H;
+    if (sunrise) {
+      H = 360 - R2D * Math.acos(cosH);
+    } else {
+      H = R2D * Math.acos(cosH);
+    }
+    H = H / 15;
 
-if (cosHfel > 1) console.log('itt ma nem kel fel a NAP!');
-if (cosHle < -1) console.log('itt ma nem nyugszik le a Nap!');
+    //calculate local mean time of rising/setting
+    T = H + RA - 0.06571 * t - 6.622;
 
-// idoszamitas befejezese...
-var felkeloH = 360 - (fromRad * Math.acos(cosHfel)) / 15;
-console.log('feleko ora: ' + felkeloH);
+    //adjust back to UTC
+    UT = T - lnHour; // lnHour = localoffset?
+    if (UT > 24) {
+      UT = UT - 24;
+    } else if (UT < 0) {
+      UT = UT + 24;
+    }
 
-//  a lenyugvo ido lenyugvoH
-var lenyugvoH = (fromRad * Math.acos(cosHle)) / 15;
-console.log('lenyugvas ideje: ' + lenyugvoH);
+    //convert UT value to local time zone of latitude/longitude
+    localT = UT - localOffset; // localOffsetnek a timezonet kell beallitania!
 
-// helyi felkelo ido  felT
-var felT = felkeloH + felRa2 - 0.06571 * tRise - 6.662;
+    //convert to Milliseconds
+    return localT * 3600 * 1000;
+  }
 
-// helyi lenyugvo ido leT
-var leT = lenyugvoH + leRa2 - 0.06571 * tSet - 6.662;
+  console.log(N);
+  var sunrise = computeSunrise(N, true);
+  var sunset = computeSunrise(N, false);
+  var napAzEgen = sunset - sunrise;
+  console.log('Nap az Egen milisecben: ' + napAzEgen);
 
-// UTC
-var utFel = felT - lngHour;
-var utLe = leT - lngHour;
-if (utFel > 24) utFel -= 24;
-if (utFel < 0) utFel += 24;
-if (utLe > 24) utLe -= 24;
-if (utLe < 0) utLe += 24;
+  function convertMS(ms) {
+    var d, h, m, s;
+    s = Math.floor(ms / 1000);
+    m = Math.floor(s / 60);
+    s = s % 60;
+    h = Math.floor(m / 60);
+    m = m % 60;
+    d = Math.floor(h / 24);
+    h = h % 24;
+    if (h > 30) {
+      m += 1;
+    }
+    return h + ':' + m;
+    return { d: d, h: h, m: m, s: s };
+  }
 
-// local time felkelo localTfel
-var localTfel = utFel - localOffset;
-var hourFel = localTfel;
-console.log(hourFel);
+  var napF = convertMS(sunrise);
+  var napL = convertMS(sunset);
+  console.log('a napkelete: ' + napF + ' a napnyugta: ' + napL);
 
-var minuteFel = (localTfel - hourFel) * 60;
-if (minuteFel < 10) {
-  padFel = '0';
-} else {
-  padFel = ' ';
-}
+  napF = parseFloat(napF);
+  napL = parseFloat(napL);
 
-console.log(hourFel + ' : ' + padFel + '' + minuteFel + ' a Nap felkel');
-
-// local time lenyugvo localTle
-var localTle = utLe - localOffset;
-var hourLe = localTle;
-var minuteLe = (localTle - hourLe) * 60;
-if (minuteLe < 10) {
-  padLe = '0';
-} else {
-  padLe = ' ';
-}
-
-console.log(hourLe + ' : ' + padLe + '' + minuteLe + ' a Nap lenyugszik');
+  var sunOnSky = convertMS(napAzEgen);
+  console.log('a Nap az egen ma ' + sunOnSky + ' orat van fen!');
+}, 4000);
